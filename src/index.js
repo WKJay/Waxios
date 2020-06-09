@@ -1,2 +1,3 @@
-let a = 12;
-alert(a);
+import Waxios from './waxios'
+
+console.log(Waxios.default);
