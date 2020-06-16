@@ -9,5 +9,11 @@ export default {
             test: "test"
         },
         post: {}
+    },
+    transformRequest(config) {
+        return config;
+    },
+    transformResponse(response) {
+        return JSON.parse(response);
     }
 }

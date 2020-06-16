@@ -2,12 +2,29 @@ import defaultOptions from './default'
 import request from './request'
 import {
     merge,
-    assert
+    assert,
+    clone
 } from './common'
+import {
+    resolve
+} from 'path';
+import {
+    rejects
+} from 'assert';
+
+import createResponse from './response'
+import createError from './error'
+import Interceptors from './interceptors'
+
+const urlLib = require('url');
 
 class Waxios {
     constructor() {
         let _this = this;
+        this.interceptors = {
+            request: new Interceptors(),
+            response: new Interceptors()
+        };
         return new Proxy(request, {
             get(data, name) {
                 return _this[name];
@@ -33,17 +50,20 @@ class Waxios {
                         assert(false, 'invalid arguments');
                     }
                 }
-                _this.request(options);
+                return _this.request(options);
             }
         });
-    }
+    };
 
     request(options) {
         let _headers = this.default.headers;
         delete this.default.headers;
 
-        merge(options, this.default);
+        let result = clone(this.default);
+        merge(result, this.default);
+        merge(result, options);
         this.default.headers = _headers;
+        options = result;
 
         //合并头
         let headers = {};
@@ -54,15 +74,50 @@ class Waxios {
         options.headers = headers;
 
         //2.检测参数合法性
-        assert(options.method, 'no method');
-        assert(options.url, 'no url');
+        checkOptions(options);
 
         //3.合并baseURL
-        options.url = options.baseUrl + options.url;
+        //options.url = options.baseUrl + options.url;
+        options.url = urlLib.resolve(options.baseUrl, options.url);
         delete options.baseUrl;
 
-        //4.调用request
-        request(options);
+        //4.变换请求
+        const {
+            transformRequest,
+            transformResponse
+        } = options;
+
+        delete options.transformRequest;
+        delete options.transformResponse;
+        options = transformRequest(options);
+
+        checkOptions(options);
+
+        let list = this.interceptors.request.list();
+        list.forEach(fn => {
+            options = fn(options);
+            checkOptions(options);
+        });
+
+
+        //5.调用request
+        return new Promise((resolve, reject) => {
+            //包装结果/错误信息
+            request(options).then(xhr => {
+                let res = createResponse(xhr);
+                res.data = transformResponse(res.data);
+
+                let list = this.interceptors.response.list();
+                list.forEach(fn => {
+                    res = fn(res);
+                });
+                resolve(res);
+            }, xhr => {
+                let res = createError(xhr);
+                reject(res);
+            });
+        });
+
     }
 
     _preprocessArgs(method, args) {
@@ -100,7 +155,7 @@ class Waxios {
                 assert(false, 'invalid arguments');
             }
         }
-        this.request(options);
+        return this.request(options);
     }
 
     post(...args) {
@@ -127,19 +182,26 @@ class Waxios {
                 assert(false, "invalid arguments");
             }
         }
-        this.request(options);
+        return this.request(options);
     }
-}
+};
+
 Waxios.create = Waxios.prototype.create = function (options) {
     let waxios = new Waxios();
-
-    let res = {
-        ...JSON.parse(JSON.stringify(defaultOptions))
-    };
+    let res = clone(defaultOptions);
 
     merge(res, options);
+
     waxios.default = res;
+
+
     return waxios;
+}
+
+function checkOptions(options) {
+    assert(options, 'options is required');
+    assert(options.method, 'no method');
+    assert(options.url, 'no url');
 }
 
 export default Waxios.create();

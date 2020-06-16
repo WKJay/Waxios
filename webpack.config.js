@@ -6,11 +6,11 @@ module.exports = function (env = {}) {
 
     return {
         mode: dev ? "development" : "production",
-        entry: "./src/index.js",
+        entry: ["@babel/polyfill", "./src/index.js"],
         output: {
             path: path.resolve(__dirname, "dist"),
-            filename: dev ? "waxios.js" : "waxios.min.js",
-            sourceMapFilename: dev ? "waxios.map" : "waxios.min.map",
+            filename: dev ? "Mwaxios.js" : "Mwaxios.min.js",
+            sourceMapFilename: dev ? "Mwaxios.map" : "Mwaxios.min.map",
             libraryTarget: "umd",
         },
         module: {
