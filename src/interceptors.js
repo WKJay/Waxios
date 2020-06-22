@@ -1,6 +1,4 @@
-import {
-    assert
-} from './common'
+
 
 export default class Interceptors {
     constructor() {

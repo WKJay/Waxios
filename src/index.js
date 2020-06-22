@@ -28,6 +28,7 @@ waxios1.interceptors.request.use(function (config) {
 //         a: 12
 //     }
 // })
+
 (async () => {
     let data = await waxios1('data/1.json', {
         headers: {
@@ -37,6 +38,15 @@ waxios1.interceptors.request.use(function (config) {
     });
     console.log(data);
 })();
+
+// waxios1('data/1.json', {
+//     headers: {
+//         a: 12,
+//         b: 6
+//     }
+// }).then(data => {
+//     console.log(data);
+// })
 
 
 

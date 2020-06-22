@@ -5,13 +5,6 @@ import {
     assert,
     clone
 } from './common'
-import {
-    resolve
-} from 'path';
-import {
-    rejects
-} from 'assert';
-
 import createResponse from './response'
 import createError from './error'
 import Interceptors from './interceptors'
